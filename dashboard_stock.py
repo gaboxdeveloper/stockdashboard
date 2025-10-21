@@ -49,14 +49,21 @@ with st.form("form_agregar"):
     if submitted:
         if not articulo or not ubicacion:
             st.error("Completa el nombre y la ubicación.")
+        elif cantidad <= 0:
+            st.error("La cantidad debe ser mayor a cero.")
         else:
-            nuevo = pd.DataFrame({"Artículo": [articulo], "Cantidad": [int(cantidad)], "Ubicación": [ubicacion]})
-            st.session_state.df = pd.concat([st.session_state.df, nuevo], ignore_index=True)
-            # Guardar inmediatamente (opcional)
-            st.session_state.df.to_csv(CSV_PATH, index=False)
-            st.success(f"✅ {articulo} agregado y guardado en {CSV_PATH}")
+            mask = ((st.session_state.df["Artículo"] == articulo) &
+                    (st.session_state.df["Ubicación"] == ubicacion))
+            if mask.any():
+                st.session_state.df.loc[mask, "Cantidad"] += int(cantidad)
+                st.success(f"✅ Cantidad actualizada para {articulo} en {ubicacion}")
+            else:
+                nuevo = pd.DataFrame({"Artículo": [articulo], "Cantidad": [int(cantidad)], "Ubicación": [ubicacion]})
+                st.session_state.df = pd.concat([st.session_state.df, nuevo], ignore_index=True)
+                st.success(f"✅ {articulo} agregado correctamente.")
+        st.session_state.df.to_csv(CSV_PATH, index=False)
 
 # Botón para guardar manualmente
 if st.button("💾 Guardar inventario"):
     st.session_state.df.to_csv(CSV_PATH, index=False)
-    st.success(f"Inventario guardado en {CSV_PATH}")
+    st.success(f"Inventario guardado satisfactoriamente")
